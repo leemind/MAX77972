@@ -1,6 +1,6 @@
 # MAX77972 Driver Walkthrough
 
-I have successfully implemented the I2C driver for the MAX77972 logic on ESP32.
+Implemented the I2C driver for the MAX77972 logic on ESP32.
 
 ## What has been built
 - **Core Driver (`max77972.h/cpp`)**: Handles I2C communication and interacts with the chip's registers.
