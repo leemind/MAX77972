@@ -1,13 +1,13 @@
 # MAX77972 Driver Walkthrough
 
-I have successfully implemented the I2C driver for the MAX77972 logic on ESP32.
+Implemented the I2C driver for the MAX77972 logic on ESP32.
 
-## What has been built
+## Included
 - **Core Driver (`max77972.h/cpp`)**: Handles I2C communication and interacts with the chip's registers.
 - **Example Project**: A complete ESP-IDF example to initialize the charger and read fuel gauge data.
 
 ## Register Map Verification
-Using the datasheet you provided, I extracted the following critical details:
+Using the datasheet:
 - **I2C Address**: `0x36` (covers 0x00-0xFF map).
 - **Charger Registers**:
   - `nChgConfig` block starts at `0xD0`.
@@ -33,7 +33,3 @@ float soc = charger.getSoC();
 float volts = charger.getVoltage();
 ```
 
-## Next Steps
-1. **Connect Hardware**: Wire the MAX77972 to your ESP32 (SDA/SCL + Pullups).
-2. **Compile**: Run `idf.py build flash monitor` in the `examples/get_started` directory.
-3. **Verify**: Check the log output for SoC and Voltage readings.
