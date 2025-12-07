@@ -1,0 +1,5 @@
+description: "I2C driver for MAX77972 Battery Charger and Fuel Gauge"
+version: "0.1.0"
+dependencies:
+  idf:
+    version: ">=4.4"
