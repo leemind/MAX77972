@@ -176,10 +176,59 @@ int MAX77972::setFastChargeCurrent(uint16_t current_ma) {
     return writeRegister16(MAX77972_REG_ICHG, reg_val);
 }
 
-int MAX77972::setTopOffVoltage(uint16_t voltage_mv) {
-    uint16_t reg_val = (uint16_t)((float)voltage_mv * 1000.0f / 78.125f);
-    ESP_LOGI(TAG, "Setting Top-off Voltage to %d mV (reg_val: 0x%04x)", voltage_mv, reg_val);
+int MAX77972::getChargingCurrent() {
+    uint16_t raw = 0;
+    if (readRegister16(MAX77972_REG_ICHG, &raw) == 0) {
+        ESP_LOGI(TAG, "getChargingCurrent raw: 0x%04x", raw);
+        return (int)(raw * 0.15625f);
+    }
+    return -1;
+}
+
+int MAX77972::setChargingVoltage(int voltage_mv) {
+    uint16_t reg_val;
+    if (voltage_mv <= 3400) {
+        reg_val = 0x0000;
+    } else if (voltage_mv <= 3500) {
+        reg_val = 0xAF00;
+    } else if (voltage_mv <= 3550) {
+        reg_val = 0xB180;
+    } else if (voltage_mv == 4050) {
+        reg_val = 0xCAB0;
+    } else if (voltage_mv >= 4640) {
+        reg_val = 0xE801;
+    } else {
+        // Use the straight formula for everything else (3.6V-4.0V, 4.1V-4.63V)
+        reg_val = (uint16_t)(voltage_mv / 0.078125f);
+    }
+    
+    ESP_LOGI(TAG, "Setting Charging Voltage to %d mV (reg_val: 0x%04x)", voltage_mv, reg_val);
     return writeRegister16(MAX77972_REG_VCHG, reg_val);
+}
+
+int MAX77972::getChargingVoltage() {
+    uint16_t raw = 0;
+    if (readRegister16(MAX77972_REG_VCHG, &raw) == 0) {
+        ESP_LOGI(TAG, "getChargingVoltage raw: 0x%04x", raw);
+        if (raw <= 0xAEFF) {
+            return 3400;
+        } else if (raw >= 0xAF00 && raw <= 0xB17F) {
+            return 3500;
+        } else if (raw >= 0xB180 && raw <= 0xB3FF) {
+            return 3550;
+        } else if (raw >= 0xB400 && raw <= 0xCAAF) {
+            float mv = raw * 0.078125f;
+            return ((int)mv / 100) * 100;
+        } else if (raw >= 0xCAB0 && raw <= 0xCCFF) {
+            return 4050;
+        } else if (raw >= 0xCD00 && raw <= 0xE800) {
+            float mv = raw * 0.078125f;
+            return ((int)mv / 10) * 10;
+        } else {
+            return 4640;
+        }
+    }
+    return -1;
 }
 
 int MAX77972::enableCharger(bool enable) {
@@ -206,22 +255,22 @@ float MAX77972::getSoC() {
     return -1.0f;
 }
 
-float MAX77972::getVoltage() {
+int MAX77972::getVoltage() {
     uint16_t raw = 0;
     if (readRegister16(MAX77972_REG_VCELL, &raw) == 0) {
         ESP_LOGI(TAG, "getVoltage raw: 0x%04x", raw);
-        return (float)raw * 0.078125f; 
+        return (int)(raw * 0.078125f); 
     }
-    return -1.0f;
+    return -1;
 }
 
-float MAX77972::getCurrent() {
+int MAX77972::getCurrent() {
     uint16_t raw = 0;
     if (readRegister16(MAX77972_REG_IIN, &raw) == 0) {
         ESP_LOGI(TAG, "getCurrent raw: 0x%04x", raw);
-        return (float)((int16_t)raw) * 0.15625f; 
+        return (int)((int16_t)raw * 0.15625f); 
     }
-    return -1.0f; 
+    return -1; 
 }
 
 float MAX77972::getCapacity() {
@@ -230,6 +279,21 @@ float MAX77972::getCapacity() {
         return (float)raw * 0.5f; 
     }
     return -1.0f;
+}
+
+int MAX77972::getDesignCapacity() {
+    uint16_t raw = 0;
+    if (readRegister16(MAX77972_REG_DESIGN_CAPACITY, &raw) == 0) {
+        ESP_LOGI(TAG, "getDesignCapacity raw: 0x%04x", raw);
+        return (int)(raw * 0.5f);
+    }
+    return -1;
+}
+
+int MAX77972::setDesignCapacity(uint16_t capacity_mah) {
+    uint16_t reg_val = (uint16_t)(capacity_mah * 2);
+    ESP_LOGI(TAG, "Setting Design Capacity to %d mAh (reg_val: 0x%04x)", capacity_mah, reg_val);
+    return writeRegister16(MAX77972_REG_DESIGN_CAPACITY, reg_val);
 }
 
 float MAX77972::getTemperature() {

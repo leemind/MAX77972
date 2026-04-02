@@ -13,6 +13,7 @@
 #define MAX77972_REG_CHG_MASK_STS   0x01
 #define MAX77972_REG_REP_CAP        0x06 // Capacity (mAh LSB=0.5)
 #define MAX77972_REG_REP_SOC        0x07 // SOC (% LSB=1/256)
+#define MAX77972_REG_DESIGN_CAPACITY  0x18 // Design Capacity mAh - scalar 0.5
 #define MAX77972_REG_AVG_VCELL      0x19 // Avg Voltage
 #define MAX77972_REG_VCELL          0x1A // Battery Voltage (LSB=78.125uV)
 #define MAX77972_REG_TEMP           0x1B // Temperature
@@ -28,6 +29,8 @@
 #define MAX77972_REG_NCHG_CFG_3     0xD3 // CHGIN_ILIM
 #define MAX77972_REG_NCHG_CFG_4     0xD4
 #define MAX77972_REG_NCHG_CFG_5     0xD5 // ChgEnable
+#define MAX77972_REG_CHG_DETAILS_00 0xD6
+#define MAX77972_REG_CHG_DETAILS_01 0xD7
 
 // Masks
 #define MAX77972_CFG5_CHG_EN_MASK   (1 << 1)
@@ -57,11 +60,23 @@ public:
     int setFastChargeCurrent(uint16_t current_ma);
 
     /**
-     * @brief Set Top-off Voltage (Termination Voltage)
-     * @param voltage_mv Voltage in mV (Typical: 4200mV for 4.2V, Step: ~0.078mV internal but ~10mV effective)
+     * @brief Get Fast Charge Current
+     * @return Current in mA, or -1 on error
+     */
+    int getChargingCurrent();
+
+    /**
+     * @brief Set Charging Voltage
+     * @param voltage_mv Voltage in mV
      * @return 0 on success
      */
-    int setTopOffVoltage(uint16_t voltage_mv);
+    int setChargingVoltage(int voltage_mv);
+
+    /**
+     * @brief Get Top-off Voltage (Termination Voltage)
+     * @return Voltage in mV, or -1 on error
+     */
+    int getChargingVoltage();
 
     /**
      * @brief Enable or Disable Charger
@@ -86,21 +101,34 @@ public:
 
     /**
      * @brief Get Battery Voltage
-     * @return Voltage in Volts
+     * @return Voltage in mV Let's correct this comment as well
      */
-    float getVoltage();
+    int getVoltage();
 
     /**
      * @brief Get Battery Current
      * @return Current in mA (Calculated/Estimated or from register if available - not implemented yet)
      */
-    float getCurrent();
+    int getCurrent();
 
     /**
      * @brief Get Remaining Capacity
      * @return Capacity in mAh
      */
     float getCapacity();
+
+    /**
+     * @brief Get Design Capacity
+     * @return Capacity in mAh, or -1 on error
+     */
+    int getDesignCapacity();
+
+    /**
+     * @brief Set Design Capacity
+     * @param capacity_mah Capacity in mAh
+     * @return 0 on success
+     */
+    int setDesignCapacity(uint16_t capacity_mah);
 
     /**
      * @brief Get Temperature

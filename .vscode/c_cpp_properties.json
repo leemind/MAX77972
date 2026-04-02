@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "RubbleDevice Symlink",
+            "compileCommands": "${workspaceFolder}/../RubbleDevice/.pio/build/rubble/compile_commands.json",
+            "compilerPath": "",
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "intelliSenseMode": "gcc-x64",
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "${workspaceFolder}/**"
+                ]
+            }
+        }
+    ],
+    "version": 4
+}
