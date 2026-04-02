@@ -165,6 +165,7 @@ int MAX77972::updateRegister(uint8_t reg, uint8_t mask, uint8_t val) {
     if (readRegister(reg, &curr) != 0) return -1;
     
     uint8_t next = (curr & ~mask) | (val & mask);
+    ESP_LOGI(TAG, "Updating register 0x%02x from 0x%02x to 0x%02x with mask 0x%02x", reg, curr, next, mask);
     return writeRegister(reg, next);
 }
 
