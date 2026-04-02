@@ -20,8 +20,51 @@ bool MAX77972::begin(TwoWire& bus, uint8_t address) {
         return false;
     }
 
-    ESP_LOGI(TAG, "MAX77972 connection successful");
+    ESP_LOGI(TAG, "I2C connection successful. Waiting for device to be ready...");
+
+    // 1. Wait for DNR (Data Not Ready) to clear
+    if (!waitForDNR(1000)) {
+        ESP_LOGW(TAG, "Device took too long to clear DNR bit. Proceeding anyway...");
+    }
+
+    // 2. Check for POR (Power-On Reset)
+    uint16_t status = 0;
+    if (readRegister16(MAX77972_REG_STATUS, &status) == 0) {
+        if (status & MAX77972_STATUS_POR) {
+            ESP_LOGI(TAG, "Power-On Reset detected. Clearing POR bit...");
+            
+            // In a full implementation, we would load the EZ Config model here.
+            // For now, we clear the POR bit to allow the algorithm to run.
+            updateRegister(MAX77972_REG_STATUS, MAX77972_STATUS_POR, 0);
+            
+            // Wait for algorithm to settle
+            delay(10);
+        }
+    } else {
+        ESP_LOGE(TAG, "Failed to read Status register.");
+        return false;
+    }
+
+    ESP_LOGI(TAG, "MAX77972 initialization complete.");
     return true; // Success
+}
+
+bool MAX77972::waitForDNR(uint16_t timeout_ms) {
+    uint32_t startTime = millis();
+    uint16_t fstat = 0;
+    
+    while (millis() - startTime < timeout_ms) {
+        if (readRegister16(MAX77972_REG_FSTAT, &fstat) == 0) {
+            if (!(fstat & MAX77972_FSTAT_DNR)) {
+                ESP_LOGI(TAG, "FStat.DNR cleared after %d ms", (int)(millis() - startTime));
+                return true;
+            }
+        }
+        delay(10);
+    }
+    
+    ESP_LOGE(TAG, "Timeout waiting for FStat.DNR to clear (FStat: 0x%04x)", fstat);
+    return false;
 }
 
 int MAX77972::writeRegister(uint8_t reg, uint8_t data) {
@@ -40,7 +83,6 @@ int MAX77972::writeRegister(uint8_t reg, uint8_t data) {
         return error;
     }
     
-    ESP_LOGD(TAG, "Write reg 0x%02x value 0x%02x success", reg, data);
     return 0;
 }
 
@@ -65,7 +107,6 @@ int MAX77972::readRegister(uint8_t reg, uint8_t *data) {
     }
     
     *data = _i2c->read();
-    ESP_LOGD(TAG, "Read reg 0x%02x value 0x%02x success", reg, *data);
     return 0;
 }
 
@@ -89,7 +130,6 @@ int MAX77972::writeRegister16(uint8_t reg, uint16_t data) {
         return error;
     }
     
-    ESP_LOGD(TAG, "Write16 reg 0x%02x value 0x%04x success", reg, data);
     return 0;
 }
 
@@ -117,7 +157,6 @@ int MAX77972::readRegister16(uint8_t reg, uint16_t *data) {
     uint8_t msb = _i2c->read();
     *data = (msb << 8) | lsb;
     
-    ESP_LOGD(TAG, "Read16 reg 0x%02x value 0x%04x success", reg, *data);
     return 0;
 }
 
@@ -126,7 +165,6 @@ int MAX77972::updateRegister(uint8_t reg, uint8_t mask, uint8_t val) {
     if (readRegister(reg, &curr) != 0) return -1;
     
     uint8_t next = (curr & ~mask) | (val & mask);
-    ESP_LOGD(TAG, "Updating reg 0x%02x from 0x%02x to 0x%02x", reg, curr, next);
     return writeRegister(reg, next);
 }
 
@@ -162,6 +200,7 @@ uint8_t MAX77972::getChargerStatus() {
 float MAX77972::getSoC() {
     uint16_t raw = 0;
     if (readRegister16(MAX77972_REG_REP_SOC, &raw) == 0) {
+        ESP_LOGI(TAG, "getSoC raw: 0x%04x", raw);
         return (float)raw / 256.0f;
     }
     return -1.0f;
@@ -170,20 +209,34 @@ float MAX77972::getSoC() {
 float MAX77972::getVoltage() {
     uint16_t raw = 0;
     if (readRegister16(MAX77972_REG_VCELL, &raw) == 0) {
-        return (float)raw * 0.000078125f; 
+        ESP_LOGI(TAG, "getVoltage raw: 0x%04x", raw);
+        return (float)raw * 0.078125f; 
     }
     return -1.0f;
 }
 
 float MAX77972::getCurrent() {
-    // Current detection not yet implemented
-    return 0.0f; 
+    uint16_t raw = 0;
+    if (readRegister16(MAX77972_REG_IIN, &raw) == 0) {
+        ESP_LOGI(TAG, "getCurrent raw: 0x%04x", raw);
+        return (float)((int16_t)raw) * 0.15625f; 
+    }
+    return -1.0f; 
 }
 
 float MAX77972::getCapacity() {
     uint16_t raw = 0;
     if (readRegister16(MAX77972_REG_REP_CAP, &raw) == 0) {
         return (float)raw * 0.5f; 
+    }
+    return -1.0f;
+}
+
+float MAX77972::getTemperature() {
+    uint16_t raw = 0;
+    if (readRegister16(MAX77972_REG_TEMP, &raw) == 0) {
+        ESP_LOGI(TAG, "getTemperature raw: 0x%04x", raw);
+        return (float)((int16_t)raw) / 256.0f;
     }
     return -1.0f;
 }

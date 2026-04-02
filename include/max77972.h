@@ -16,6 +16,8 @@
 #define MAX77972_REG_AVG_VCELL      0x19 // Avg Voltage
 #define MAX77972_REG_VCELL          0x1A // Battery Voltage (LSB=78.125uV)
 #define MAX77972_REG_TEMP           0x1B // Temperature
+#define MAX77972_REG_IIN            0x1C // Input Current (LSB=0.15625mA)
+#define MAX77972_REG_FSTAT          0x3D // Fuel Gauge Status
 
 // Smart Power Selector / Charger Config
 #define MAX77972_REG_ICHG           0x28 // ChargingCurrent (LSB=0.15625mA)
@@ -29,6 +31,9 @@
 
 // Masks
 #define MAX77972_CFG5_CHG_EN_MASK   (1 << 1)
+
+#define MAX77972_STATUS_POR         (1 << 1) // Power-On Reset bit in Status (0x00)
+#define MAX77972_FSTAT_DNR          (1 << 0) // Data Not Ready bit in FStat (0x3D)
 
 class MAX77972 {
 public:
@@ -97,6 +102,12 @@ public:
      */
     float getCapacity();
 
+    /**
+     * @brief Get Temperature
+     * @return Temperature in degrees Celsius
+     */
+    float getTemperature();
+
 private:
     TwoWire* _i2c;
     uint8_t _address;
@@ -106,4 +117,7 @@ private:
     int readRegister16(uint8_t reg, uint16_t *data); 
     int writeRegister16(uint8_t reg, uint16_t data);
     int updateRegister(uint8_t reg, uint8_t mask, uint8_t val);
+    
+    // Fuel Gauge helpers
+    bool waitForDNR(uint16_t timeout_ms = 1000);
 };
