@@ -180,7 +180,7 @@ int MAX77972::setFastChargeCurrent(uint16_t current_ma) {
 int MAX77972::getChargingCurrent() {
     uint16_t raw = 0;
     if (readRegister16(MAX77972_REG_ICHG, &raw) == 0) {
-        ESP_LOGI(TAG, "getChargingCurrent raw: 0x%04x", raw);
+        //ESP_LOGI(TAG, "getChargingCurrent raw: 0x%04x", raw);
         return (int)(raw * 0.15625f);
     }
     return -1;
@@ -210,7 +210,7 @@ int MAX77972::setChargingVoltage(int voltage_mv) {
 int MAX77972::getChargingVoltage() {
     uint16_t raw = 0;
     if (readRegister16(MAX77972_REG_VCHG, &raw) == 0) {
-        ESP_LOGI(TAG, "getChargingVoltage raw: 0x%04x", raw);
+        //ESP_LOGI(TAG, "getChargingVoltage raw: 0x%04x", raw);
         if (raw <= 0xAEFF) {
             return 3400;
         } else if (raw >= 0xAF00 && raw <= 0xB17F) {
@@ -283,7 +283,7 @@ void MAX77972::interpretChargeDetails01(uint16_t details) {
 float MAX77972::getSoC() {
     uint16_t raw = 0;
     if (readRegister16(MAX77972_REG_REP_SOC, &raw) == 0) {
-        ESP_LOGI(TAG, "getSoC raw: 0x%04x", raw);
+        //ESP_LOGI(TAG, "getSoC raw: 0x%04x", raw);
         return (float)raw / 256.0f;
     }
     return -1.0f;
@@ -292,7 +292,7 @@ float MAX77972::getSoC() {
 int MAX77972::getVoltage() {
     uint16_t raw = 0;
     if (readRegister16(MAX77972_REG_VCELL, &raw) == 0) {
-        ESP_LOGI(TAG, "getVoltage raw: 0x%04x", raw);
+        //ESP_LOGI(TAG, "getVoltage raw: 0x%04x", raw);
         return (int)(raw * 0.078125f); 
     }
     return -1;
@@ -301,7 +301,7 @@ int MAX77972::getVoltage() {
 int MAX77972::getCurrent() {
     uint16_t raw = 0;
     if (readRegister16(MAX77972_REG_IIN, &raw) == 0) {
-        ESP_LOGI(TAG, "getCurrent raw: 0x%04x", raw);
+        //ESP_LOGI(TAG, "getCurrent raw: 0x%04x", raw);
         return (int)((int16_t)raw * 0.15625f); 
     }
     return -1; 
@@ -318,7 +318,7 @@ float MAX77972::getCapacity() {
 int MAX77972::getDesignCapacity() {
     uint16_t raw = 0;
     if (readRegister16(MAX77972_REG_DESIGN_CAPACITY, &raw) == 0) {
-        ESP_LOGI(TAG, "getDesignCapacity raw: 0x%04x", raw);
+        //ESP_LOGI(TAG, "getDesignCapacity raw: 0x%04x", raw);
         return (int)(raw * 0.5f);
     }
     return -1;
@@ -333,7 +333,7 @@ int MAX77972::setDesignCapacity(uint16_t capacity_mah) {
 float MAX77972::getTemperature() {
     uint16_t raw = 0;
     if (readRegister16(MAX77972_REG_TEMP, &raw) == 0) {
-        ESP_LOGI(TAG, "getTemperature raw: 0x%04x", raw);
+        //ESP_LOGI(TAG, "getTemperature raw: 0x%04x", raw);
         return (float)((int16_t)raw) / 256.0f;
     }
     return -1.0f;
