@@ -245,6 +245,39 @@ uint8_t MAX77972::getChargerStatus() {
     return status;
 }
 
+uint16_t MAX77972::getChargeDetails00() {
+    uint16_t details = 0;
+    readRegister16(MAX77972_REG_CHG_DETAILS_00, &details);
+    return details;
+}
+
+uint16_t MAX77972::getChargeDetails01() {
+    uint16_t details = 0;
+    readRegister16(MAX77972_REG_CHG_DETAILS_01, &details);
+    return details;
+}
+
+void MAX77972::interpretChargeDetails00(uint16_t details) {
+    ESP_LOGI(TAG, "--- Charge Details 00 ---");
+    ESP_LOGI(TAG, "AICL_OK    : %d", (details >> 15) & 1);
+    ESP_LOGI(TAG, "CHGIN_OK   : %d", (details >> 14) & 1);
+    ESP_LOGI(TAG, "CHG_OK     : %d", (details >> 12) & 1);
+    ESP_LOGI(TAG, "BAT_OK     : %d", (details >> 11) & 1);
+    ESP_LOGI(TAG, "BYP_OK     : %d", (details >> 8) & 1);
+    ESP_LOGI(TAG, "CHGIN_DTLS : %d", (details >> 5) & 3); // 2 bits
+    ESP_LOGI(TAG, "CHGEN      : %d", (details >> 0) & 1);
+}
+
+void MAX77972::interpretChargeDetails01(uint16_t details) {
+    ESP_LOGI(TAG, "--- Charge Details 01 ---");
+    ESP_LOGI(TAG, "TREG       : %d", (details >> 15) & 1);
+    ESP_LOGI(TAG, "BAT_DTLS   : %d", (details >> 14) & 7); // 3 bits
+    ESP_LOGI(TAG, "CHG_DTLS   : %d", (details >> 11) & 15); // 4 bits
+    ESP_LOGI(TAG, "BAT_DIS_OC : %d", (details >> 7) & 1   ); // 1 bit
+    ESP_LOGI(TAG, "BYP_DTLS   : %d", (details >> 3) & 15); // 4 bits
+}
+    
+
 // --- Fuel Gauge ---
 
 float MAX77972::getSoC() {

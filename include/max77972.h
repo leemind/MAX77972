@@ -91,6 +91,30 @@ public:
      */
     uint8_t getChargerStatus();
 
+    /**
+     * @brief Get Charge Details 00
+     * @return Charge Details 00 register value (16-bit)
+     */
+    uint16_t getChargeDetails00();
+
+    /**
+     * @brief Get Charge Details 01
+     * @return Charge Details 01 register value (16-bit)
+     */
+    uint16_t getChargeDetails01();
+
+    /**
+     * @brief Interpret and log the Charge Details 00 flags
+     * @param details 16-bit value from getChargeDetails00()
+     */
+    void interpretChargeDetails00(uint16_t details);
+
+    /**
+     * @brief Interpret and log the Charge Details 01 flags
+     * @param details 16-bit value from getChargeDetails01()
+     */
+    void interpretChargeDetails01(uint16_t details);
+
     // --- Fuel Gauge (ModelGauge m5) ---
 
     /**
