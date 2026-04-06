@@ -67,42 +67,48 @@ bool MAX77972::waitForDNR(uint16_t timeout_ms) {
     return false;
 }
 
-int MAX77972::writeRegister(uint8_t reg, uint8_t data) {
+int MAX77972::writeRegister(uint16_t reg, uint8_t data) {
     if (!_i2c) {
         ESP_LOGE(TAG, "Write failed: I2C bus not initialized");
         return -1;
     }
     
-    _i2c->beginTransmission(_address);
-    _i2c->write(reg);
+    uint8_t addr_offset = (reg >> 8) & 0xFF;
+    uint8_t reg_addr = reg & 0xFF;
+    
+    _i2c->beginTransmission(_address + addr_offset);
+    _i2c->write(reg_addr);
     _i2c->write(data);
     int error = _i2c->endTransmission();
     
     if (error != 0) {
-        ESP_LOGE(TAG, "Write to reg 0x%02x failed with error %d", reg, error);
+        ESP_LOGE(TAG, "Write to reg 0x%04x failed with error %d", reg, error);
         return error;
     }
     
     return 0;
 }
 
-int MAX77972::readRegister(uint8_t reg, uint8_t *data) {
+int MAX77972::readRegister(uint16_t reg, uint8_t *data) {
     if (!_i2c || !data) {
         ESP_LOGE(TAG, "Read failed: Invalid argument or I2C not initialized");
         return -1;
     }
     
-    _i2c->beginTransmission(_address);
-    _i2c->write(reg);
+    uint8_t addr_offset = (reg >> 8) & 0xFF;
+    uint8_t reg_addr = reg & 0xFF;
+    
+    _i2c->beginTransmission(_address + addr_offset);
+    _i2c->write(reg_addr);
     int error = _i2c->endTransmission(false);
     
     if (error != 0) {
-        ESP_LOGE(TAG, "Read reg 0x%02x (address phase) failed with error %d", reg, error);
+        ESP_LOGE(TAG, "Read reg 0x%04x (address phase) failed with error %d", reg, error);
         return error;
     }
     
-    if (_i2c->requestFrom(_address, (uint8_t)1) != 1) {
-        ESP_LOGE(TAG, "Read reg 0x%02x (data phase) failed", reg);
+    if (_i2c->requestFrom((uint8_t)(_address + addr_offset), (uint8_t)1) != 1) {
+        ESP_LOGE(TAG, "Read reg 0x%04x (data phase) failed", reg);
         return -1;
     }
     
@@ -110,46 +116,52 @@ int MAX77972::readRegister(uint8_t reg, uint8_t *data) {
     return 0;
 }
 
-int MAX77972::writeRegister16(uint8_t reg, uint16_t data) {
+int MAX77972::writeRegister16(uint16_t reg, uint16_t data) {
     if (!_i2c) {
         ESP_LOGE(TAG, "Write16 failed: I2C bus not initialized");
         return -1;
     }
     
+    uint8_t addr_offset = (reg >> 8) & 0xFF;
+    uint8_t reg_addr = reg & 0xFF;
+    
     uint8_t LSB = data & 0xFF;
     uint8_t MSB = (data >> 8) & 0xFF;
 
-    _i2c->beginTransmission(_address);
-    _i2c->write(reg);
+    _i2c->beginTransmission(_address + addr_offset);
+    _i2c->write(reg_addr);
     _i2c->write(LSB);
     _i2c->write(MSB);
     int error = _i2c->endTransmission();
     
     if (error != 0) {
-        ESP_LOGE(TAG, "Write16 to reg 0x%02x (0x%04x) failed with error %d", reg, data, error);
+        ESP_LOGE(TAG, "Write16 to reg 0x%04x (0x%04x) failed with error %d", reg, data, error);
         return error;
     }
     
     return 0;
 }
 
-int MAX77972::readRegister16(uint8_t reg, uint16_t *data) {
+int MAX77972::readRegister16(uint16_t reg, uint16_t *data) {
     if (!_i2c || !data) {
         ESP_LOGE(TAG, "Read16 failed: Invalid argument or I2C not initialized");
         return -1;
     }
     
-    _i2c->beginTransmission(_address);
-    _i2c->write(reg);
+    uint8_t addr_offset = (reg >> 8) & 0xFF;
+    uint8_t reg_addr = reg & 0xFF;
+    
+    _i2c->beginTransmission(_address + addr_offset);
+    _i2c->write(reg_addr);
     int error = _i2c->endTransmission(false);
 
     if (error != 0) {
-        ESP_LOGE(TAG, "Read16 reg 0x%02x (address phase) failed with error %d", reg, error);
+        ESP_LOGE(TAG, "Read16 reg 0x%04x (address phase) failed with error %d", reg, error);
         return error;
     }
 
-    if (_i2c->requestFrom(_address, (uint8_t)2) != 2) {
-        ESP_LOGE(TAG, "Read16 reg 0x%02x (data phase) failed", reg);
+    if (_i2c->requestFrom((uint8_t)(_address + addr_offset), (uint8_t)2) != 2) {
+        ESP_LOGE(TAG, "Read16 reg 0x%04x (data phase) failed", reg);
         return -1;
     }
     
@@ -160,12 +172,12 @@ int MAX77972::readRegister16(uint8_t reg, uint16_t *data) {
     return 0;
 }
 
-int MAX77972::updateRegister(uint8_t reg, uint8_t mask, uint8_t val) {
+int MAX77972::updateRegister(uint16_t reg, uint8_t mask, uint8_t val) {
     uint8_t curr;
     if (readRegister(reg, &curr) != 0) return -1;
     
     uint8_t next = (curr & ~mask) | (val & mask);
-    ESP_LOGI(TAG, "Updating register 0x%02x from 0x%02x to 0x%02x with mask 0x%02x", reg, curr, next, mask);
+    ESP_LOGI(TAG, "Updating register 0x%04x from 0x%02x to 0x%02x with mask 0x%02x", reg, curr, next, mask);
     return writeRegister(reg, next);
 }
 
@@ -184,6 +196,30 @@ int MAX77972::getChargingCurrent() {
         return (int)(raw * 0.15625f);
     }
     return -1;
+}
+
+int MAX77972::setRoomChargeVoltage(int voltage_mv) {
+    uint16_t raw;
+    // Read the current configuration from I2C bus + 1, register decomposes 0x1CC to offset 1, reg 0xCC automatically
+    if (readRegister16(MAX77972_REG_NVCHG_CFG_1, &raw) != 0) {
+        ESP_LOGE(TAG, "Failed to read NVCHG_CFG_1");
+        return -1;
+    }
+    ESP_LOGI(TAG, "Read NVCHG_CFG_1: 0x%04x", raw);
+    
+    // Calculate RoomChargeVolt based on: VCHG[Step4][Room] = 3.4V + (RoomChargeVolt * 10mV)
+    int room_cv = (voltage_mv - 3400) / 10;
+    if (room_cv < 0) room_cv = 0;
+    if (room_cv > 255) room_cv = 255;
+    
+    // WarmChargeVolt is bits 15:12, RoomChargeVolt is bits 11:4, CoolChargeVolt is bits 3:0
+    // Mask out bits 11:4 (0x0FF0) and insert new room_cv
+    raw = (raw & 0xF00F) | ((room_cv & 0xFF) << 4);
+    
+    ESP_LOGI(TAG, "Setting Room Charge Voltage to %d mV (RoomChargeVolt: %d, NVCHG_CFG_1: 0x%04x)", voltage_mv, room_cv, raw);
+    
+    // Write the updated configuration back to I2C bus + 1
+    return writeRegister16(MAX77972_REG_NVCHG_CFG_1, raw);
 }
 
 int MAX77972::setChargingVoltage(int voltage_mv) {

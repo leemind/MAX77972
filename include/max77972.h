@@ -32,6 +32,9 @@
 #define MAX77972_REG_CHG_DETAILS_00 0xD6
 #define MAX77972_REG_CHG_DETAILS_01 0xD7
 
+// Registers that are on i2c bus 0x37 - i.e. +1
+#define MAX77972_REG_NVCHG_CFG_1     0x1CC
+
 // Masks
 #define MAX77972_CFG5_CHG_EN_MASK   (1 << 1)
 
@@ -160,15 +163,22 @@ public:
      */
     float getTemperature();
 
+    /**
+    * @brief Set Room Temperature Charge Voltage
+    * @param voltage_mv Voltage in mV
+    * @return 0 on success
+    */
+    int setRoomChargeVoltage(int voltage_mv);
+
 private:
     TwoWire* _i2c;
     uint8_t _address;
 
-    int writeRegister(uint8_t reg, uint8_t data);
-    int readRegister(uint8_t reg, uint8_t *data);
-    int readRegister16(uint8_t reg, uint16_t *data); 
-    int writeRegister16(uint8_t reg, uint16_t data);
-    int updateRegister(uint8_t reg, uint8_t mask, uint8_t val);
+    int writeRegister(uint16_t reg, uint8_t data);
+    int readRegister(uint16_t reg, uint8_t *data);
+    int readRegister16(uint16_t reg, uint16_t *data); 
+    int writeRegister16(uint16_t reg, uint16_t data); 
+    int updateRegister(uint16_t reg, uint8_t mask, uint8_t val);
     
     // Fuel Gauge helpers
     bool waitForDNR(uint16_t timeout_ms = 1000);
