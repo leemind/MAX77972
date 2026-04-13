@@ -213,8 +213,7 @@ int MAX77972::setRoomChargeVoltage(int voltage_mv) {
 
   // Calculate RoomChargeVolt based on: VCHG[Step4][Room] = 3.4V +
   // (RoomChargeVolt * 10mV)
-  // Not sure if the datasheet is wrong but replacing 3400 with 3200
-  uint8_t room_cv = (voltage_mv - 3200) / 10;
+  uint8_t room_cv = (voltage_mv - 3400) / 10;
   if (room_cv < 0)
     room_cv = 0;
   if (room_cv > 255)
@@ -252,7 +251,8 @@ int MAX77972::setRoomChargingCurrent(int charge_ma) {
   // raw = 0b0010001111101000;
 
   ESP_LOGI(TAG, "Setting Room Charge Current to %d mA, NICHG_CFG_1: 0x%04x", charge_ma, raw);
-  ESP_LOGI(TAG, "NICHG_CFG_1: " BYTE_TO_BINARY_PATTERN " " BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(raw >> 8), BYTE_TO_BINARY(raw & 0xFF));
+  ESP_LOGI(TAG, "NICHG_CFG_1: " BYTE_TO_BINARY_PATTERN " " BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(raw >> 8),
+      BYTE_TO_BINARY(raw & 0xFF));
 
   // Write the updated configuration back to I2C bus + 1
   return writeRegister16(MAX77972_REG_NICHG_CFG_1, raw);
