@@ -183,6 +183,16 @@ int MAX77972::updateRegister(uint16_t reg, uint8_t mask, uint8_t val) {
   return writeRegister(reg, next);
 }
 
+int MAX77972::updateRegister16(uint16_t reg, uint16_t mask, uint16_t val) {
+  uint16_t curr;
+  if (readRegister16(reg, &curr) != 0)
+    return -1;
+
+  uint16_t next = (curr & ~mask) | (val & mask);
+  ESP_LOGI(TAG, "Updating register 0x%04x from 0x%04x to 0x%04x with mask 0x%04x", reg, curr, next, mask);
+  return writeRegister16(reg, next);
+}
+
 // --- Charger Control ---
 
 // I don't think this is correct - I think you need to set via nIChgCfg1 (0x1CE)
@@ -308,6 +318,44 @@ int MAX77972::getChargingVoltage() {
 int MAX77972::enableCharger(bool enable) {
   ESP_LOGI(TAG, "%s charger", enable ? "Enabling" : "Disabling");
   return updateRegister(MAX77972_REG_NCHG_CFG_5, MAX77972_CFG5_CHG_EN_MASK, enable ? MAX77972_CFG5_CHG_EN_MASK : 0);
+}
+
+int MAX77972::enableUSB_BC_Detection(bool enable) {
+  ESP_LOGI(TAG, "%s USB BC Detection", enable ? "Enabling" : "Disabling");
+  return updateRegister16(MAX77972_REG_NCHG_CFG_4, MAX77972_CHGDETEN_MASK, enable ? MAX77972_CHGDETEN_MASK : 0);
+}
+
+int MAX77972::enableUSB_CC_Detection(bool enable) {
+  ESP_LOGI(TAG, "%s USB CC Detection", enable ? "Enabling" : "Disabling");
+  return updateRegister16(MAX77972_REG_NCHG_CFG_5, MAX77972_CCDETEN_MASK, enable ? MAX77972_CCDETEN_MASK : 0);
+}
+
+int MAX77972::enableAutoIset(bool enable) {
+  ESP_LOGI(TAG, "%s Auto-Iset", enable ? "Enabling" : "Disabling");
+  return updateRegister16(MAX77972_REG_NCHG_CFG_4, MAX77972_NO_AUTOISET, enable ? 0 : MAX77972_NO_AUTOISET);
+}
+
+int MAX77972::setSDPMaxCurr(uint8_t value) {
+  uint16_t current = (value << 13);
+  ESP_LOGI(TAG, "Setting SDP Max Curr reg_val: 0x%04x", current);
+  return updateRegister16(MAX77972_REG_NCHG_CFG_4, MAX77972_SDP_MAX_CURR_MASK, current);
+}
+
+int MAX77972::setCDPMaxCurr(uint8_t value) {
+  uint16_t current = (value << 12);
+  ESP_LOGI(TAG, "Setting CDP Max Curr reg_val: 0x%04x", current);
+  return updateRegister16(MAX77972_REG_NCHG_CFG_4, MAX77972_CDP_MAX_CURR_MASK, current);
+}
+
+int MAX77972::setCHGIN_ILIM(uint16_t current_ma) {
+  // 0x0 to 0x03 is 100mA
+  // 0x04 to 0x7F is (CHGIN_ILIM + 1) * 25mA
+  uint16_t value = 0;
+  if (current_ma <= 3200) {
+    value = (current_ma / 25) - 1;
+  }
+  ESP_LOGI(TAG, "Setting CHGIN_ILIM reg_val: 0x%04x", value);
+  return updateRegister16(MAX77972_REG_NCHG_CFG_3, MAX77972_CHGIN_ILIM_MASK, value);
 }
 
 uint8_t MAX77972::getChargerStatus() {

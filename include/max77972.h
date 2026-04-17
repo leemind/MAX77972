@@ -42,6 +42,14 @@
 #define MAX77972_STATUS_POR (1 << 1) // Power-On Reset bit in Status (0x00)
 #define MAX77972_FSTAT_DNR (1 << 0)  // Data Not Ready bit in FStat (0x3D)
 
+#define MAX77972_CHGDETEN_MASK (1 << 8)
+#define MAX77972_NO_AUTOISET (1 << 7)
+#define MAX77972_SDP_MAX_CURR_MASK (1 << 14) | (1 << 13)
+#define MAX77972_CDP_MAX_CURR_MASK (1 << 12)
+#define MAX77972_CCDETEN_MASK (1 << 0) // in 0xD5
+
+#define MAX77972_CHGIN_ILIM_MASK 0x7F
+
 class MAX77972 {
 public:
   MAX77972();
@@ -89,6 +97,18 @@ public:
    * @return 0 on success
    */
   int enableCharger(bool enable);
+
+  int enableUSB_BC_Detection(bool enable);
+
+  int enableUSB_CC_Detection(bool enable);
+
+  int enableAutoIset(bool enable);
+
+  int setSDPMaxCurr(uint8_t value);
+
+  int setCDPMaxCurr(uint8_t value);
+
+  int setCHGIN_ILIM(uint16_t current_ma);
 
   /**
    * @brief Get Charger Status
@@ -186,9 +206,10 @@ private:
 
   int writeRegister(uint16_t reg, uint8_t data);
   int readRegister(uint16_t reg, uint8_t *data);
+  int updateRegister(uint16_t reg, uint8_t mask, uint8_t val);
   int readRegister16(uint16_t reg, uint16_t *data);
   int writeRegister16(uint16_t reg, uint16_t data);
-  int updateRegister(uint16_t reg, uint8_t mask, uint8_t val);
+  int updateRegister16(uint16_t reg, uint16_t mask, uint16_t val);
 
   // Fuel Gauge helpers
   bool waitForDNR(uint16_t timeout_ms = 1000);
