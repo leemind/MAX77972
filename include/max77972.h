@@ -26,6 +26,8 @@
 
 // Charger Configuration Registers (0xD0 - 0xD5 ...)
 #define MAX77972_REG_NCHG_CFG_0 0xD0 // Mode, WDTEN
+#define MAX77972_REG_NCHG_CFG_1 0xD1 // 
+#define MAX77972_REG_NCHG_CFG_2 0xD2 // Used for FSHIP_MODE
 #define MAX77972_REG_NCHG_CFG_3 0xD3 // CHGIN_ILIM
 #define MAX77972_REG_NCHG_CFG_4 0xD4
 #define MAX77972_REG_NCHG_CFG_5 0xD5 // ChgEnable
@@ -49,6 +51,9 @@
 #define MAX77972_CCDETEN_MASK (1 << 0) // in 0xD5
 
 #define MAX77972_CHGIN_ILIM_MASK 0x7F
+
+#define MAX77972_FSHIP_MODE_MASK (1 << 8)
+#define MAX77972_DEEPSHIP_MODE_MASK (1 << 2)
 
 class MAX77972 {
 public:
@@ -199,6 +204,9 @@ public:
    * @return 0 on success
    */
   int setRoomChargingCurrent(int current_ma);
+
+  int setFactoryShipMode();
+  int setDeepShipMode();
 
 private:
   TwoWire *_i2c;

@@ -456,3 +456,12 @@ float MAX77972::getTemperature() {
   }
   return -1.0f;
 }
+
+int MAX77972::setFactoryShipMode() {
+  return updateRegister16(MAX77972_REG_NCHG_CFG_2,MAX77972_FSHIP_MODE_MASK,MAX77972_FSHIP_MODE_MASK);
+}
+
+int MAX77972::setDeepShipMode() {
+    return updateRegister16(MAX77972_REG_NCHG_CFG_5,MAX77972_DEEPSHIP_MODE_MASK,MAX77972_DEEPSHIP_MODE_MASK);
+
+}
